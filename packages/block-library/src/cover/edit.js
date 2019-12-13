@@ -389,18 +389,8 @@ function CoverEdit( {
 							settings={ [ {
 								colorValue: overlayColor.color,
 								gradientValue,
-								onColorChange: ( ...args ) => {
-									setAttributes( {
-										customGradient: undefined,
-									} );
-									setOverlayColor( ...args );
-								},
-								onGradientChange: ( newGradient ) => {
-									setGradient( newGradient );
-									setAttributes( {
-										overlayColor: undefined,
-									} );
-								},
+								onColorChange: setOverlayColor,
+								onGradientChange: setGradient,
 								label: __( 'Overlay' ),
 							} ] }
 						>

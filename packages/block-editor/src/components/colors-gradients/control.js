@@ -1,7 +1,8 @@
 /**
  * External dependencies
  */
-import { isEmpty, pick } from 'lodash';
+import classnames from 'classnames';
+import { isEmpty, pick, some } from 'lodash';
 
 /**
  * WordPress dependencies
@@ -23,7 +24,7 @@ const colorIndicatorAriaLabel = __( '(Color: %s' );
 // translators: first %s: the gradient name or value (e.g. red to green or linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%)
 const gradientIndicatorAriaLabel = __( '(Gradient: %s' );
 
-const relevantSettings = [ 'colors', 'disableCustomColors', 'gradients', 'disableCustomGradients' ];
+const colorsAndGradientKeys = [ 'colors', 'disableCustomColors', 'gradients', 'disableCustomGradients' ];
 
 function VisualLabel( { colors, gradients, label, currentTab, colorValue, gradientValue } ) {
 	let value, ariaLabel;
@@ -54,45 +55,28 @@ function VisualLabel( { colors, gradients, label, currentTab, colorValue, gradie
 	);
 }
 
-export default function ColorGradientControl( {
+function ColorGradientControlInner( {
+	colors,
+	gradients,
+	disableCustomColors,
+	disableCustomGradients,
+	className,
 	label,
 	onColorChange,
 	onGradientChange,
 	colorValue,
 	gradientValue,
-	...otherProps
 } ) {
-	const {
-		colors,
-		gradients,
-		disableCustomColors,
-		disableCustomGradients,
-	} = useSelect(
-		( select ) => {
-			const settings = select( 'core/block-editor' ).getSettings();
-			return {
-				...pick( settings, relevantSettings ),
-				...pick( otherProps, relevantSettings ),
-			};
-		},
-		[
-			otherProps.colors,
-			otherProps.disableCustomColors,
-			otherProps.gradients,
-			otherProps.disableCustomGradients,
-		]
-	);
-
 	const canChooseAColor = onColorChange && ( ! isEmpty( colors ) || ! disableCustomColors );
 	const canChooseAGradient = onGradientChange && ( ! isEmpty( gradients ) || ! disableCustomGradients );
-	const [ currentTab, setCurrentTab ] = useState( canChooseAColor ? 'color' : ( !! canChooseAGradient && 'gradient' ) );
+	const [ currentTab, setCurrentTab ] = useState( gradientValue ? 'gradient' : !! canChooseAColor && 'color' );
 
 	if ( ! canChooseAColor && ! canChooseAGradient ) {
 		return null;
 	}
 	return (
 		<BaseControl
-			className="block-editor-color-palette-control"
+			className={ classnames( 'block-editor-color-gradient-control', className ) }
 		>
 			<BaseControl.VisualLabel>
 				<VisualLabel
@@ -103,10 +87,11 @@ export default function ColorGradientControl( {
 				/>
 			</BaseControl.VisualLabel>
 			{ canChooseAColor && canChooseAGradient && (
-				<ButtonGroup>
+				<ButtonGroup className="block-editor-color-gradient-control__button-tabs">
 					<Button
 						isLarge
 						isPrimary={ currentTab === 'color' }
+						isSecondary={ currentTab !== 'color' }
 						onClick={ () => ( setCurrentTab( 'color' ) ) }
 					>
 						{ __( 'Solid Color' ) }
@@ -114,6 +99,7 @@ export default function ColorGradientControl( {
 					<Button
 						isLarge
 						isPrimary={ currentTab === 'gradient' }
+						isSecondary={ currentTab !== 'gradient' }
 						onClick={ () => ( setCurrentTab( 'gradient' ) ) }
 					>
 						{ __( 'Gradient' ) }
@@ -122,19 +108,53 @@ export default function ColorGradientControl( {
 			) }
 			{ currentTab === 'color' && (
 				<ColorPalette
-					className="block-editor-color-palette-control__color-palette"
 					value={ colorValue }
-					onChange={ onColorChange }
+					onChange={ canChooseAGradient ?
+						( newColor ) => {
+							onColorChange( newColor );
+							onGradientChange();
+						} :
+						onColorChange
+					}
 					{ ... { colors, disableCustomColors } }
 				/>
 			) }
 			{ currentTab === 'gradient' && (
 				<GradientPicker
 					value={ gradientValue }
-					onChange={ onGradientChange }
+					onChange={ canChooseAGradient ?
+						( newGradient ) => {
+							onGradientChange( newGradient );
+							onColorChange();
+						} :
+						onColorChange
+					}
 					{ ... { gradients, disableCustomGradients } }
 				/>
 			) }
 		</BaseControl>
 	);
 }
+
+function ColorGradientControlSelect( props ) {
+	const colorGradientSettings = useSelect(
+		( select ) => {
+			const settings = select( 'core/block-editor' ).getSettings();
+			return pick( settings, colorsAndGradientKeys );
+		}
+	);
+	return <ColorGradientControlInner { ...{ ...colorGradientSettings, ...props } } />;
+}
+
+function ColorGradientControl( props ) {
+	const relevantProps = pick( props, colorsAndGradientKeys );
+	if ( isEmpty( relevantProps ) || some(
+		pick( props, colorsAndGradientKeys ),
+		( setting ) => ( setting === undefined )
+	) ) {
+		return <ColorGradientControlSelect { ...props } />;
+	}
+	return <ColorGradientControlInner { ...props } />;
+}
+
+export default ColorGradientControl;

@@ -17,6 +17,8 @@ const PanelColorSettings = ( {
 	return (
 		<PanelColorGradientSettings
 			settings={ settings }
+			gradients={ [] }
+			disableCustomGradients={ true }
 			{ ...props }
 		/>
 	);

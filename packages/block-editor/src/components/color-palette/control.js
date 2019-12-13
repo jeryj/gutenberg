@@ -15,6 +15,8 @@ export default function ColorPaletteControl( {
 			{ ...{ colors, disableCustomColors, label } }
 			onColorChange={ onChange }
 			colorValue={ value }
+			gradients={ [] }
+			disableCustomGradients={ true }
 		/>
 	);
 }

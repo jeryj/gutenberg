@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+import classnames from 'classnames';
 import { isEmpty, pick, some } from 'lodash';
 
 /**
@@ -70,6 +71,7 @@ const Indicators = ( { colors, gradients, settings } ) => {
 };
 
 export const PanelColorGradientSettingsInner = ( {
+	className,
 	colors,
 	gradients,
 	disableCustomColors,
@@ -83,14 +85,14 @@ export const PanelColorGradientSettingsInner = ( {
 		return null;
 	}
 	const titleElement = (
-		<span className="block-editor-panel-color-settings__panel-title">
+		<span className="block-editor-panel-color-gradient-settings__panel-title">
 			{ title }
 			<Indicators colors={ colors } gradients={ gradients } settings={ settings } />
 		</span>
 	);
 	return (
 		<PanelBody
-			className="block-editor-panel-color-settings"
+			className={ classnames( 'block-editor-panel-color-gradient-settings', className ) }
 			title={ titleElement }
 			{ ...props }
 		>
